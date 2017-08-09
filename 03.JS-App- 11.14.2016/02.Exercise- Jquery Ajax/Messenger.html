@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Messenger</title>
+    <style>
+        label { display: inline-block; width: 5em; }
+        #author, #content { width: 30em; }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+</head>
+<body>
+<div id="main">
+    <textarea id="messages" cols="80" rows="12" disabled="true"></textarea>
+    <div id="controls">
+        <label for="author">Name: </label><input id="author" type="text"><br>
+        <label for="content">Message: </label><input id="content" type="text">
+        <input id="submit" type="button" value="Send">
+        <input id="refresh" type="button" value="Refresh">
+    </div>
+</div>
+<script src="solution.js"></script>
+<script>
+    (function attackEvents() {
+         $('#refresh').click(loadMessages);
+         $('#submit').click(createNewMessage);
+
+         let baseUrl = 'https://messanger-c0bb1.firebaseio.com/messanger.json';
+
+         function loadMessages() {
+             $('#messages').empty();
+             $.ajax({
+                 method: 'GET',
+                 url: baseUrl ,
+                 success: function (data) {
+                     let keys = Object.keys(data).sort((id1, id2) => data[id1].timestamp - data[id2].timestamp);
+                     for(let message of keys){
+                         $('#messages').append(`${data[message].author}: ${data[message].content}\n`)
+                     }
+
+                 }
+             });
+
+         }
+
+         function createNewMessage() {
+            let newMessage = JSON.stringify({
+                author: $('#author').val(),
+                content:$('#content').val(),
+                timestamp: Date.now()
+            })
+
+             $.post(baseUrl, newMessage).then(loadMessages());
+             $('#author').val('');
+             $('#content').val('');
+
+         }
+    }())
+
+</script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DOM Search</title>
+    <script src="https://code.jquery.com/jquery-3.1.0.min.js"
+            integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s="
+            crossorigin="anonymous"></script>
+    <style>
+        .add-controls, .search-controls {
+            width: 20em;
+            height: 2em;
+        }
+        input {
+            position: absolute;
+            left:6em;
+        }
+        .button {
+            background-color: darkgrey;
+            color: white;
+            font-weight: bold;
+            position: absolute;
+            left: 15em;
+            border: 1px solid black;
+            padding: 0 5px 0 5px;
+        }
+        .result-controls .button {
+            position: relative;
+            left: 0;
+            font-size: 50%;
+            margin-right:1em;
+            padding: 0;
+            bottom: 3px;
+        }
+        li {
+            list-style-type: none;
+        }
+    </style>
+</head>
+<body>
+<div id="content"></div>
+<script src="dom-search.js"></script>
+<script>
+    domSearch("#content",false);
+
+    function domSearch(selector, sensitive = false) {
+        let container = $(selector);
+        container.addClass("items-control");
+
+        let addControls = $('<div>');
+        addControls.addClass("add-controls");
+        let newText = $("<label>Enter text: <input></label>");
+        let addBtn = $("<a>Add</a>");
+        addBtn.addClass("button");
+        addBtn.css("display", "inline-block");
+        newText.appendTo(addControls);
+        addBtn.appendTo(addControls);
+        container.append(addControls);
+
+        let searchControls = $('<div>');
+        searchControls.addClass("search-controls");
+        let searchText = $("<label>Search: <input></label>");
+        searchText.appendTo(searchControls);
+        container.append(searchControls);
+
+        let result = $("<div>");
+        let ul = $("<ul>");
+        result.addClass("result-controls");
+        ul.addClass("items-list");
+        ul.appendTo(result);
+        container.append(result);
+
+        addBtn.click(function () {
+            let currentItem = $(".add-controls label input").val();
+            let li = $("<li>");
+            let deleteBtn = $("<a>X</a>");
+            deleteBtn.addClass("button");
+            li.addClass("list-item");
+            let textValue = $("<strong>");
+            textValue.text(currentItem);
+            deleteBtn.appendTo(li);
+            textValue.appendTo(li);
+            li.appendTo(ul);
+            $(".add-controls label input").val('');
+            deleteBtn.click(function () {
+                $(this).parent().fadeOut(function () {
+                    $(this).remove();
+            });
+            });
+        });
+
+       $(".search-controls label input").on('input', function () {
+           let searchString = $(".search-controls label input").val();
+           $(".items-list li").each(function (index, item) {
+               let str = item.textContent.slice(1);
+               if(str.includes(searchString))
+                   item.removeAttr('style')
+               else
+                   item.attr('style', 'display: none')
+
+           })
+       });
+
+    }
+</script>
+</body>
+</html>

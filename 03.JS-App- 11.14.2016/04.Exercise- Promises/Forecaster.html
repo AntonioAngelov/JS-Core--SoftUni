@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Forecatser</title>
+    <style>
+        #content { width: 400px; }
+        #request { text-align: center; }
+        .bl { width: 300px; }
+        #current { text-align: center; font-size: 2em; }
+        #upcoming { text-align: center; }
+        .condition { text-align: left; display: inline-block; }
+        .symbol { font-size: 4em; display: inline-block; }
+        .forecast-data { display: block; }
+        .upcoming { display: inline-block; margin: 1.5em; }
+        .label { margin-top: 1em; font-size: 1.5em; background-color: aquamarine; font-weight: 400; }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+</head>
+<body>
+<div id="content">
+    <div id="request">
+        <input id="location" class='bl' type="text">
+        <input id="submit" class="bl" type="button" value="Get Weather">
+    </div>
+    <div id="forecast" style="display:none">
+        <div id="current">
+            <div class="label">Current conditions</div>
+        </div>
+        <div id="upcoming">
+            <div class="label">Three-day forecast</div>
+        </div>
+    </div>
+</div>
+<script>
+    $(function attachEvents(){
+        const baseUrl = "https://judgetests.firebaseio.com/";
+        let icons = new Map();
+        icons.set("Sunny", "&#x2600");
+        icons.set("Partly sunny", "&#x26C5");
+        icons.set("Overcast", "&#x2601");
+        icons.set("Rain", "&#x2614");
+
+        $("#submit").click(loadForecast);
+
+        function loadForecast() {
+            let locationRequest = {
+                url: baseUrl + "locations.json"
+            };
+
+            $.ajax(locationRequest)
+                .then(getForecast)
+                .catch(displayError);
+        }
+        
+        function displayError(err) {
+            alert("Error");
+        }
+
+        function getForecast(locations) {
+            let code = '';
+            for(let location of locations){
+                if($("#location").val() == location.name) code = location.code;
+            }
+
+            let todayForecastRequest = $.ajax({
+                method: "GET",
+                url: baseUrl + `forecast/today/${code}.json`
+            });
+
+            let upcomingForecastRequest = $.ajax({
+                method: "GET",
+                url: baseUrl + `forecast/upcoming/${code}.json`
+            });
+            
+            Promise.all([todayForecastRequest, upcomingForecastRequest])
+                .then(displayFullForecast)
+                .catch(displayError);
+        }
+        
+        function displayFullForecast([dataToday, dataUpcoming]) {
+
+            $("#forecast").css("display", "block");
+            $("#current").find(".label").nextAll().remove();
+            $("#upcoming").find(".label").nextAll().remove();
+
+            $("#current")
+                .append($('<span>')
+                    .addClass('condition symbol')
+                    .html(icons.get(dataToday.forecast.condition)))
+                .append($('<span>')
+                    .addClass('condition')
+                    .append($('<span>')
+                        .addClass('forecast-data')
+                        .text(dataToday.name))
+                    .append($('<span>')
+                        .addClass('forecast-data')
+                        .html(`${dataToday.forecast.low}&#176;/${dataToday.forecast.high}&#176;`))
+                    .append($('<span>')
+                        .addClass('forecast-data')
+                        .text(dataToday.forecast.condition)));
+
+
+            for(let day of dataUpcoming.forecast){
+                $("#upcoming")
+                    .append($('<span>')
+                        .addClass('upcomming')
+                        .append($('<span>')
+                            .addClass('symbol')
+                            .html(icons.get(day.condition)))
+                        .append($('<span>')
+                            .addClass('forecast-data')
+                            .html(`${day.low}&#176;/${day.high}&#176;`))
+                        .append($('<span>')
+                            .addClass('forecast-data')
+                            .text(day.condition))
+                    );
+            }
+
+        }
+    }());
+</script>
+</body>
+</html>

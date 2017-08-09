@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="   crossorigin="anonymous"></script>
+    <meta charset="UTF-8">
+    <title>PhoneBook</title>
+</head>
+<body>
+<div>
+    <h1>Phonebook</h1>
+    <ul id="phonebook"></ul>
+    <button id="btnLoad">Load</button>
+
+    <h1>Create Contact</h1>
+    Person: <input type="text" id="person"/>
+    <br>
+    Phone: <input type="text" id="phone"/>
+    <br>
+    <button id="btnCreate">Create</button>
+</div>
+
+<script>
+    $(function () {
+        $('#btnLoad').click(loadContacts);
+        $('#btnCreate').click(createContact);
+
+        let baseUrl  = 'https://phonebook-nakov.firebaseio.com/phonebook';
+
+        function loadContacts() {
+            $('#phonebook').empty();
+            $.get(baseUrl + '.json')
+                .then(displayContacts)
+                .catch(displayError);
+        }
+
+        function displayError(err) {
+            $('#phonebook').append($('<li>Error</li>'));
+        }
+
+        function displayContacts(contacts) {
+            for(let contact in contacts){
+                let person = contacts[contact]['person'];
+                let phone = contacts[contact]['phone'];
+
+                let li = $('<li>').text(person + ': ' + phone);
+                $('#phonebook').append(li);
+                li.append($('<button>[Delete]</button>').click(function () {
+                    deleteContact(contact)
+                }));
+            }
+        }
+        
+        function deleteContact(contact) {
+            let requeat = {
+                method: 'DELETE',
+                url: baseUrl + '/' + contact + '.json'
+            };
+
+            $.ajax(requeat)
+                .then(loadContacts)
+                .catch(displayError);
+        }
+
+        function createContact() {
+            let newContact = JSON.stringify(
+                {
+                    person: $('#person').val(),
+                    phone: $('#phone').val()
+                });
+            $.post(baseUrl + '.json', newContact)
+                .then(loadContacts)
+                .catch(displayError);
+
+            $('#person').val("");
+            $('#phone').val("");
+
+
+        }
+    })
+</script>
+
+</body>
+</html>
